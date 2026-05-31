@@ -227,8 +227,9 @@
   // ── CONFIG — replace these with your values ──
   const SUPABASE_URL = 'https://hgffjrrxfaozatehkexx.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnZmZqcnJ4ZmFvemF0ZWhrZXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTk4OTgsImV4cCI6MjA5NTczNTg5OH0.ivyge6wc5xeLhL95TX8_OTzSs444dCn46v3M3LXbN1I';
-  const API = 'http://localhost:3000/api';
-  // ─────────────────────────────────────────────
+  const API = window.location.hostname === 'localhost'
+  ? 'http://localhost:3000/api'
+  : window.location.origin + '/api';  // ─────────────────────────────────────────────
 
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

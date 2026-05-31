@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskMind AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #111111;
+      --surface: #1c1c1c;
+      --surface2: #242424;
+      --border: #2e2e2e;
+      --text: #e8e8e8;
+      --text-muted: #888;
+      --text-faint: #444;
+      --accent: #10a37f;
+      --red: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── Login page ── */
+    #login-page {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    }
+    .login-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 40px; width: 100%; max-width: 380px;
+      text-align: center;
+    }
+    .login-mark {
+      width: 56px; height: 56px; border-radius: 14px;
+      background: var(--accent); display: flex; align-items: center;
+      justify-content: center; font-size: 26px; margin: 0 auto 20px;
+    }
+    .login-title { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+    .login-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; line-height: 1.5; }
+    .google-btn {
+      width: 100%; padding: 12px; border-radius: 10px;
+      background: white; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+      color: #333; transition: opacity 0.15s;
+    }
+    .google-btn:hover { opacity: 0.9; }
+    .google-btn img { width: 18px; height: 18px; }
+    .login-footer { font-size: 11px; color: var(--text-faint); margin-top: 20px; }
+
+    /* ── App ── */
+    #app-page { display: none; }
+
+    header {
+      border-bottom: 1px solid var(--border); padding: 14px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--surface); position: sticky; top: 0; z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    .logo-name { font-size: 15px; font-weight: 600; }
+    .header-right { display: flex; align-items: center; gap: 14px; }
+    .header-stats { display: flex; gap: 16px; }
+    .stat { text-align: center; }
+    .stat-num { font-size: 16px; font-weight: 600; color: var(--accent); }
+    .stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .user-info { display: flex; align-items: center; gap: 8px; }
+    .user-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--surface2); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600; color: var(--accent); overflow: hidden;
+    }
+    .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .user-email { font-size: 12px; color: var(--text-muted); }
+    .signout-btn {
+      padding: 5px 12px; border-radius: 7px; border: 1px solid var(--border);
+      background: none; color: var(--text-muted); font-family: 'Inter', sans-serif;
+      font-size: 12px; cursor: pointer; transition: all 0.15s;
+    }
+    .signout-btn:hover { border-color: var(--red); color: #f87171; }
+
+    main { max-width: 900px; margin: 0 auto; padding: 28px 24px; }
+
+    .add-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 24px; }
+    .add-title { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .add-row { display: flex; gap: 10px; }
+    .add-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
+    .add-input:focus { border-color: var(--accent); }
+    .add-input::placeholder { color: var(--text-faint); }
+    .desc-input { margin-top: 8px; width: 100%; resize: none; min-height: 56px; }
+    .add-btn { padding: 11px 18px; background: var(--accent); border: none; border-radius: 10px; color: white; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; white-space: nowrap; transition: opacity 0.15s; }
+    .add-btn:hover { opacity: 0.88; }
+    .add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .ai-badge { font-size: 10px; background: rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; }
+    .spinner { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .filters { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+    .filter-label { font-size: 12px; color: var(--text-muted); margin-right: 2px; }
+    .filter-btn { padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); background: none; color: var(--text-muted); font-family: 'Inter', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+    .filter-btn:hover { background: var(--surface2); color: var(--text); }
+    .filter-btn.active { background: var(--surface2); color: var(--text); border-color: var(--accent); }
+
+    #tasks-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: border-color 0.2s; animation: slideIn 0.25s ease both; }
+    @keyframes slideIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+    .task-card:hover { border-color: #3a3a3a; }
+    .card-main { padding: 14px 16px; }
+    .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .card-left { flex: 1; min-width: 0; }
+    .task-title { font-size: 14.5px; font-weight: 500; margin-bottom: 3px; line-height: 1.4; }
+    .task-title.done { text-decoration: line-through; color: var(--text-muted); }
+    .task-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+    .card-right { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+    .priority-badge { font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.04em; font-family: 'JetBrains Mono', monospace; }
+    .priority-high { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+    .priority-medium { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
+    .priority-low { background: rgba(16,163,127,0.12); color: #34d399; border: 1px solid rgba(16,163,127,0.2); }
+    .status-select { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text-muted); padding: 4px 7px; font-family: 'Inter', sans-serif; font-size: 12px; cursor: pointer; outline: none; }
+    .delete-btn { background: none; border: none; color: var(--text-faint); cursor: pointer; padding: 3px; border-radius: 4px; font-size: 18px; transition: color 0.15s; line-height: 1; }
+    .delete-btn:hover { color: var(--red); }
+    .card-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+    .meta-item { font-size: 11.5px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+    .tags { display: flex; gap: 5px; flex-wrap: wrap; }
+    .tag { font-size: 10.5px; padding: 2px 7px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+    .subtasks-section { border-top: 1px solid var(--border); padding: 10px 16px; background: rgba(0,0,0,0.12); }
+    .subtasks-header { font-size: 10.5px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; display: flex; justify-content: space-between; }
+    .subtask-progress { color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+    .progress-bar { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 8px; }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
+    .subtask-item { display: flex; align-items: center; gap: 9px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .subtask-item:last-child { border-bottom: none; }
+    .subtask-check { width: 15px; height: 15px; border-radius: 4px; border: 1.5px solid var(--border); cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .subtask-check.checked { background: var(--accent); border-color: var(--accent); }
+    .subtask-check.checked::after { content: '✓'; color: white; font-size: 9px; font-weight: 700; }
+    .subtask-text { font-size: 12.5px; color: var(--text-muted); }
+    .subtask-text.done { text-decoration: line-through; color: var(--text-faint); }
+
+    #empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+    .empty-icon { font-size: 36px; margin-bottom: 10px; }
+    .empty-title { font-size: 15px; font-weight: 500; margin-bottom: 5px; }
+    .empty-sub { font-size: 12.5px; color: var(--text-faint); }
+
+    #toast { position: fixed; bottom: 20px; right: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 11px 16px; font-size: 13px; transform: translateY(70px); opacity: 0; transition: all 0.3s; z-index: 999; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { border-color: var(--accent); }
+    #toast.error { border-color: var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- Login Page -->
+<div id="login-page">
+  <div class="login-box">
+    <div class="login-mark">⚡</div>
+    <div class="login-title">TaskMind AI</div>
+    <div class="login-sub">AI-powered task manager that auto-prioritizes and breaks down your work into actionable steps.</div>
+    <button class="google-btn" onclick="signInWithGoogle()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+      Continue with Google
+    </button>
+    <div class="login-footer">Your tasks are private and tied to your account</div>
+  </div>
+</div>
+
+<!-- App Page -->
+<div id="app-page">
+  <header>
+    <div class="logo">
+      <div class="logo-mark">⚡</div>
+      <span class="logo-name">TaskMind AI</span>
+    </div>
+    <div class="header-right">
+      <div class="header-stats">
+        <div class="stat"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total</div></div>
+        <div class="stat"><div class="stat-num" id="stat-todo">0</div><div class="stat-label">Todo</div></div>
+        <div class="stat"><div class="stat-num" id="stat-done">0</div><div class="stat-label">Done</div></div>
+      </div>
+      <div class="user-info">
+        <div class="user-avatar" id="user-avatar">U</div>
+        <span class="user-email" id="user-email"></span>
+      </div>
+      <button class="signout-btn" onclick="signOut()">Sign out</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="add-section">
+      <div class="add-title">✨ Add task — AI will auto-prioritize</div>
+      <div class="add-row">
+        <input id="task-title" class="add-input" type="text" placeholder="e.g. Build a REST API for user authentication...">
+      </div>
+      <div class="add-row" style="margin-top:8px">
+        <textarea id="task-desc" class="add-input desc-input" placeholder="Optional description for better AI analysis..."></textarea>
+        <button class="add-btn" id="add-btn" onclick="addTask()">
+          <span id="btn-content">⚡ Add <span class="ai-badge">AI</span></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <span class="filter-label">Filter:</span>
+      <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+      <button class="filter-btn" onclick="setFilter('todo', this)">Todo</button>
+      <button class="filter-btn" onclick="setFilter('in-progress', this)">In Progress</button>
+      <button class="filter-btn" onclick="setFilter('done', this)">Done</button>
+      <button class="filter-btn" onclick="setFilter('high', this)">🔴 High</button>
+      <button class="filter-btn" onclick="setFilter('medium', this)">🟡 Medium</button>
+      <button class="filter-btn" onclick="setFilter('low', this)">🟢 Low</button>
+    </div>
+
+    <div id="tasks-list"></div>
+    <div id="empty-state" style="display:none">
+      <div class="empty-icon">📋</div>
+      <div class="empty-title">No tasks yet</div>
+      <div class="empty-sub">Add your first task and let AI organize it</div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // ── CONFIG — replace these with your values ──
+  const SUPABASE_URL = 'https://hgffjrrxfaozatehkexx.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnZmZqcnJ4ZmFvemF0ZWhrZXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTk4OTgsImV4cCI6MjA5NTczNTg5OH0.ivyge6wc5xeLhL95TX8_OTzSs444dCn46v3M3LXbN1I';
+  const API = 'http://localhost:3000/api';
+  // ─────────────────────────────────────────────
+
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let currentUser = null;
+  let accessToken = null;
+  let allTasks = [];
+  let currentFilter = 'all';
+
+  // ── Auth ──
+  async function signInWithGoogle() {
+    await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href }
+    });
+  }
+
+  async function signOut() {
+    await sb.auth.signOut();
+    currentUser = null;
+    accessToken = null;
+    document.getElementById('login-page').style.display = 'flex';
+    document.getElementById('app-page').style.display = 'none';
+  }
+
+  // ── Check session on load ──
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (session) {
+      currentUser = session.user;
+      accessToken = session.access_token;
+      showApp();
+      await loadTasks();
+    } else {
+      document.getElementById('login-page').style.display = 'flex';
+      document.getElementById('app-page').style.display = 'none';
+    }
+  });
+
+  function showApp() {
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('app-page').style.display = 'block';
+
+    // Set user info
+    const email = currentUser.email || '';
+    const avatar = currentUser.user_metadata?.avatar_url;
+    const name = currentUser.user_metadata?.name || email;
+
+    document.getElementById('user-email').textContent = name;
+    const avatarEl = document.getElementById('user-avatar');
+    if (avatar) {
+      avatarEl.innerHTML = `<img src="${avatar}" alt="avatar">`;
+    } else {
+      avatarEl.textContent = email[0].toUpperCase();
+    }
+  }
+
+  // ── API calls with auth token ──
+  async function apiFetch(path, options = {}) {
+    const res = await fetch(`${API}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        ...options.headers
+      }
+    });
+    return res.json();
+  }
+
+  // ── Load tasks ──
+  async function loadTasks() {
+    try {
+      allTasks = await apiFetch('/tasks');
+      if (!Array.isArray(allTasks)) allTasks = [];
+      updateStats();
+      renderTasks();
+    } catch(e) {
+      showToast('Failed to load tasks', 'error');
+    }
+  }
+
+  function updateStats() {
+    document.getElementById('stat-total').textContent = allTasks.length;
+    document.getElementById('stat-todo').textContent = allTasks.filter(t => t.status === 'todo').length;
+    document.getElementById('stat-done').textContent = allTasks.filter(t => t.status === 'done').length;
+  }
+
+  function setFilter(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTasks();
+  }
+
+  function getFiltered() {
+    if (currentFilter === 'all') return allTasks;
+    if (['todo','in-progress','done'].includes(currentFilter)) return allTasks.filter(t => t.status === currentFilter);
+    return allTasks.filter(t => t.priority === currentFilter);
+  }
+
+  function renderTasks() {
+    const list = document.getElementById('tasks-list');
+    const empty = document.getElementById('empty-state');
+    const filtered = getFiltered();
+    if (!filtered.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    list.innerHTML = '';
+    filtered.forEach(t => list.appendChild(buildCard(t)));
+  }
+
+  function buildCard(task) {
+    const subtasks = task.subtasks || [];
+    const doneCount = subtasks.filter(s => s.done).length;
+    const progress = subtasks.length ? Math.round((doneCount / subtasks.length) * 100) : 0;
+    const tags = (task.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+
+    const card = document.createElement('div');
+    card.className = 'task-card';
+    card.id = `card-${task.id}`;
+    card.innerHTML = `
+      <div class="card-main">
+        <div class="card-top">
+          <div class="card-left">
+            <div class="task-title ${task.status==='done'?'done':''}">${task.title}</div>
+            ${task.description ? `<div class="task-desc">${task.description}</div>` : ''}
+          </div>
+          <div class="card-right">
+            <span class="priority-badge priority-${task.priority}">${task.priority}</span>
+            <select class="status-select" onchange="updateStatus('${task.id}', this.value)">
+              <option value="todo" ${task.status==='todo'?'selected':''}>Todo</option>
+              <option value="in-progress" ${task.status==='in-progress'?'selected':''}>In Progress</option>
+              <option value="done" ${task.status==='done'?'selected':''}>Done</option>
+            </select>
+            <button class="delete-btn" onclick="deleteTask('${task.id}')">×</button>
+          </div>
+        </div>
+        <div class="card-meta">
+          ${task.estimated_time ? `<span class="meta-item">⏱ ${task.estimated_time}</span>` : ''}
+          ${subtasks.length ? `<span class="meta-item">✓ ${doneCount}/${subtasks.length} subtasks</span>` : ''}
+        </div>
+        ${tags ? `<div class="tags">${tags}</div>` : ''}
+      </div>
+      ${subtasks.length ? `
+      <div class="subtasks-section">
+        <div class="subtasks-header">
+          <span>Subtasks</span>
+          <span class="subtask-progress">${progress}%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+        ${subtasks.map((s,i) => `
+          <div class="subtask-item">
+            <div class="subtask-check ${s.done?'checked':''}" onclick="toggleSubtask('${task.id}',${i})"></div>
+            <span class="subtask-text ${s.done?'done':''}">${s.title}</span>
+          </div>`).join('')}
+      </div>` : ''}
+    `;
+    return card;
+  }
+
+  async function addTask() {
+    const title = document.getElementById('task-title').value.trim();
+    const description = document.getElementById('task-desc').value.trim();
+    if (!title) { showToast('Please enter a task title', 'error'); return; }
+
+    const btn = document.getElementById('add-btn');
+    const btnContent = document.getElementById('btn-content');
+    btn.disabled = true;
+    btnContent.innerHTML = '<div class="spinner"></div> Analyzing...';
+
+    try {
+      const task = await apiFetch('/tasks', {
+        method: 'POST',
+        body: JSON.stringify({ title, description })
+      });
+      if (task.error) throw new Error(task.error);
+      allTasks.unshift(task);
+      document.getElementById('task-title').value = '';
+      document.getElementById('task-desc').value = '';
+      updateStats();
+      renderTasks();
+      showToast('✨ Task created with AI insights!', 'success');
+    } catch(e) {
+      showToast('Failed: ' + e.message, 'error');
+    }
+
+    btn.disabled = false;
+    btnContent.innerHTML = '⚡ Add <span class="ai-badge">AI</span>';
+  }
+
+  async function updateStatus(id, status) {
+    await apiFetch(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    const t = allTasks.find(t => t.id === id);
+    if (t) t.status = status;
+    updateStats();
+    renderTasks();
+  }
+
+  async function toggleSubtask(taskId, index) {
+    const task = allTasks.find(t => t.id === taskId);
+    if (!task) return;
+    task.subtasks[index].done = !task.subtasks[index].done;
+    await apiFetch(`/tasks/${taskId}`, { method: 'PATCH', body: JSON.stringify({ subtasks: task.subtasks }) });
+    renderTasks();
+  }
+
+  async function deleteTask(id) {
+    await apiFetch(`/tasks/${id}`, { method: 'DELETE' });
+    allTasks = allTasks.filter(t => t.id !== id);
+    updateStats();
+    renderTasks();
+    showToast('Task deleted', 'success');
+  }
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `show ${type}`;
+    setTimeout(() => t.className = '', 3000);
+  }
+
+  document.getElementById('task-title').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addTask();
+  });
+</script>
+</body>
+</html>

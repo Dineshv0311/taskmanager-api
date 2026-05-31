@@ -229,7 +229,7 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnZmZqcnJ4ZmFvemF0ZWhrZXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTk4OTgsImV4cCI6MjA5NTczNTg5OH0.ivyge6wc5xeLhL95TX8_OTzSs444dCn46v3M3LXbN1I';
   const API = window.location.hostname === 'localhost'
   ? 'http://localhost:3000/api'
-  : window.location.origin + '/api';  // ─────────────────────────────────────────────
+  : 'https://taskmanager-api-6if9.onrender.com/api';  // ─────────────────────────────────────────────
 
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
